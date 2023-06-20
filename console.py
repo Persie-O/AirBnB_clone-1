@@ -121,7 +121,7 @@ class HBNBCommand(cmd.Cmd):
             return
 
         class_name = args[0]
-        if args not in HBNBCommand.classes:
+        if class_name not in HBNBCommand.classes:
             print("** class doesn't exist **")
             return
 
@@ -130,7 +130,7 @@ class HBNBCommand(cmd.Cmd):
         if obj_params is not None:
             self.create_obj(class_name, obj_params)
 
-    def parse_params(self, prams):
+    def parse_params(self, params):
         """ formating params after its parsed """
         obj_params = {}
         for param in params:
@@ -146,7 +146,7 @@ class HBNBCommand(cmd.Cmd):
 
     def format_value(self, v):
         """ formats v based on specified syntax """
-        if v.startwith('"') and v.endwith('"'):
+        if v.startswith('"') and v.endswith('"'):
             v = v[1:-1].replace('\\"', '"').replace('_', ' ')
         elif '.' in v:
             try:
@@ -162,8 +162,8 @@ class HBNBCommand(cmd.Cmd):
 
     def create_obj(self, class_name, obj_params=None):
         """ Creates an object """
-        new_instance = HBNBCommand.classes[args]()
-        storage.save()
+        new_instance = HBNBCommand.classes[class_name](**obj_params)
+        new_instance.save()
         print(new_instance.id)
         storage.save()
 
