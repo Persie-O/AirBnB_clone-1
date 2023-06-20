@@ -73,7 +73,7 @@ class HBNBCommand(cmd.Cmd):
                 pline = pline[2].strip()  # pline is now str
                 if pline:
                     # check for *args or **kwargs
-                    if pline[0] is '{' and pline[-1] is'}'\
+                    if pline[0] == '{' and pline[-1] == '}'\
                             and type(eval(pline)) is dict:
                         _args = pline
                     else:
@@ -113,14 +113,55 @@ class HBNBCommand(cmd.Cmd):
         """ Overrides the emptyline method of CMD """
         pass
 
-    def do_create(self, args):
+    def do_create(self, arg):
         """ Create an object of any class"""
+        args = arg.split(" ")
         if not args:
             print("** class name missing **")
             return
-        elif args not in HBNBCommand.classes:
+
+        class_name = args[0]
+        if args not in HBNBCommand.classes:
             print("** class doesn't exist **")
             return
+
+        params = args[1:]
+        obj_params = self.parse_params(params)
+        if obj_params is not None:
+            self.create_obj(class_name, obj_params)
+
+    def parse_params(self, prams):
+        """ formating params after its parsed """
+        obj_params = {}
+        for param in params:
+            k_v = param.split('=', 1)
+            if len(k_v) != 2:
+                continue
+            k = k_v[0]
+            v = self.format_value(k_v[1])
+            if v is None:
+                continue
+            obj_params[k] = v
+        return obj_params if obj_params else None
+
+    def format_value(self, v):
+        """ formats v based on specified syntax """
+        if v.startwith('"') and v.endwith('"'):
+            v = v[1:-1].replace('\\"', '"').replace('_', ' ')
+        elif '.' in v:
+            try:
+                v = float(v)
+            except ValueError:
+                return None
+        else:
+            try:
+                v = int(v)
+            except ValueError:
+                return None
+        return v
+
+    def create_obj(self, class_name, obj_params=None):
+        """ Creates an object """
         new_instance = HBNBCommand.classes[args]()
         storage.save()
         print(new_instance.id)
@@ -272,7 +313,7 @@ class HBNBCommand(cmd.Cmd):
                 args.append(v)
         else:  # isolate args
             args = args[2]
-            if args and args[0] is '\"':  # check for quoted arg
+            if args and args[0] == '\"':  # check for quoted arg
                 second_quote = args.find('\"', 1)
                 att_name = args[1:second_quote]
                 args = args[second_quote + 1:]
@@ -280,10 +321,10 @@ class HBNBCommand(cmd.Cmd):
             args = args.partition(' ')
 
             # if att_name was not quoted arg
-            if not att_name and args[0] is not ' ':
+            if not att_name and args[0] != ' ':
                 att_name = args[0]
             # check for quoted val arg
-            if args[2] and args[2][0] is '\"':
+            if args[2] and args[2][0] == '\"':
                 att_val = args[2][1:args[2].find('\"', 1)]
 
             # if att_val was not quoted arg
@@ -319,6 +360,7 @@ class HBNBCommand(cmd.Cmd):
         """ Help information for the update class """
         print("Updates an object with new information")
         print("Usage: update <className> <id> <attName> <attVal>\n")
+
 
 if __name__ == "__main__":
     HBNBCommand().cmdloop()
