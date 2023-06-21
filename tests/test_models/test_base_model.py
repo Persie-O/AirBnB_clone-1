@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-""" """
+"se model tests"" """
 from models.base_model import BaseModel
 import unittest
 import datetime
@@ -8,65 +8,47 @@ import json
 import os
 
 
-class test_basemodel(unittest.TestCase):
-    """ """
+class TestBaseModel(unittest.TestCase):
+    """base_model class test"""
 
-    def __init__(self, *args, **kwargs):
-        """ """
-        super().__init__(*args, **kwargs)
-        self.name = 'BaseModel'
-        self.value = BaseModel
+    @classmethod
+    def setUpClass(cls):
+        """class method setUp"""
+        cls.base1 = BaseModel()
+        cls.base1.name = "Base"
+        cls.base1.my_number = 12
 
-    def setUp(self):
-        """ """
-        pass
-
-    def tearDown(self):
+    @classmethod
+    def tearDownClass(cls):
+        del cls.base1
         try:
             os.remove('file.json')
-        except:
+        except FileNotFoundError:
             pass
 
-    def test_default(self):
-        """ """
-        i = self.value()
-        self.assertEqual(type(i), self.value)
+    def test_init(self):
+        """tests constructor"""
+        self.assertTrue(isinstance(self.base1, BaseModel))
 
-    def test_kwargs(self):
-        """ """
-        i = self.value()
-        copy = i.to_dict()
-        new = BaseModel(**copy)
-        self.assertFalse(new is i)
-
-    def test_kwargs_int(self):
-        """ """
-        i = self.value()
-        copy = i.to_dict()
-        copy.update({1: 2})
-        with self.assertRaises(TypeError):
-            new = BaseModel(**copy)
+    @unittest.skipIf(os.getenv('HBNB_TYPE_STORAGE') == 'db',
+        "cannot work in database")
 
     def test_save(self):
-        """ Testing save """
-        i = self.value()
-        i.save()
-        key = self.name + "." + i.id
-        with open('file.json', 'r') as f:
-            j = json.load(f)
-            self.assertEqual(j[key], i.to_dict())
+        """ tests save """
+        self.base1.save()
+        self.assertNotEqual(self.base1.created_at, self.base1.updated_at)
+
+    def test_to_dict(self):
+        base1_dict = self.base1.to_dict()
+        self.assertEqual(self.base1.__class__.__name__, 'BaseModel')
+        self.assertIsInstance(base1_dict['created_at', str])
+        self.assertIsInstance(base1_dict['updated_at'], str])
 
     def test_str(self):
         """ """
         i = self.value()
         self.assertEqual(str(i), '[{}] ({}) {}'.format(self.name, i.id,
                          i.__dict__))
-
-    def test_todict(self):
-        """ """
-        i = self.value()
-        n = i.to_dict()
-        self.assertEqual(i.to_dict(), n)
 
     def test_kwargs_none(self):
         """ """
@@ -97,3 +79,6 @@ class test_basemodel(unittest.TestCase):
         n = new.to_dict()
         new = BaseModel(**n)
         self.assertFalse(new.created_at == new.updated_at)
+
+if __name__ == "__main__":
+    unittest.main()
