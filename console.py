@@ -37,7 +37,6 @@ class HBNBCommand(cmd.Cmd):
 
     def precmd(self, line):
         """Reformat command line for advanced command syntax.
-
         Usage: <class name>.<command>([<id> [<*args> or <**kwargs>]])
         (Brackets denote optional fields in usage example.)
         """
@@ -113,59 +112,26 @@ class HBNBCommand(cmd.Cmd):
         """ Overrides the emptyline method of CMD """
         pass
 
-    def do_create(self, arg):
+    def do_create(self, args):
         """ Create an object of any class"""
-        args = arg.split(" ")
-        if len(args) == 0:
+        try:
+            if not args:
+                raise SyntaxError()
+            arg_list = args.split(" ")
+            kw = {}
+            for arg in arg_list[1:]:
+                arg_splited = arg.split("=")
+                arg_splited[1] = eval(arg_splited[1])
+                if type(arg_splited[1]) is str:
+                    arg_splited[1] = arg_splited[1].replace("_", " ").replace('"', '\\"')
+                kw[arg_splited[0]] = arg_splited[1]
+        except SyntaxError:
             print("** class name missing **")
-            return
-
-        class_name = args[0]
-        if class_name not in HBNBCommand.classes:
+        except NameError:
             print("** class doesn't exist **")
-            return
-
-        params = args[1:]
-        obj_params = self.parse_params(params)
-        if obj_params is not None:
-            self.create_obj(class_name, obj_params)
-
-    def parse_params(self, params):
-        """ formating params after its parsed """
-        obj_params = {}
-        for param in params:
-            k_v = param.split('=', 1)
-            if len(k_v) != 2:
-                continue
-            k = k_v[0]
-            v = self.format_value(k_v[1])
-            if v is None:
-                continue
-            obj_params[k] = v
-        return obj_params if obj_params else None
-
-    def format_value(self, v):
-        """ formats v based on specified syntax """
-        if v.startswith('"') and v.endswith('"'):
-            v = v[1:-1].replace('\\"', '"').replace('_', ' ')
-        elif '.' in v:
-            try:
-                v = float(v)
-            except ValueError:
-                return None
-        else:
-            try:
-                v = int(v)
-            except ValueError:
-                return None
-        return v
-
-    def create_obj(self, class_name, obj_params=None):
-        """ Creates an object """
-        new_instance = HBNBCommand.classes[class_name](**obj_params)
+        new_instance = HBNBCommand.classes[arg_list[0]](**kw)
         new_instance.save()
         print(new_instance.id)
-        storage.save()
 
     def help_create(self):
         """ Help information for the create method """
@@ -247,13 +213,11 @@ class HBNBCommand(cmd.Cmd):
             if args not in HBNBCommand.classes:
                 print("** class doesn't exist **")
                 return
-            for k, v in storage._FileStorage__objects.items():
-                if k.split('.')[0] == args:
-                    print_list.append(str(v))
-        else:
-            for k, v in storage._FileStorage__objects.items():
+            for k, v in storage.all(HBNBCommand.classes[args]).items():
                 print_list.append(str(v))
-
+        else:
+            for k, v in storage.all().items():
+                print_list.append(str(v))
         print(print_list)
 
     def help_all(self):
@@ -360,7 +324,6 @@ class HBNBCommand(cmd.Cmd):
         """ Help information for the update class """
         print("Updates an object with new information")
         print("Usage: update <className> <id> <attName> <attVal>\n")
-
 
 if __name__ == "__main__":
     HBNBCommand().cmdloop()
